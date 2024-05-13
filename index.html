@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Расчет дозировки</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #0056b3;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            width: 100%; /* Adjust width to auto-adjust with the viewport */
+            max-width: 600px; /* Maximum width of the form */
+            margin: 20px auto; /* Center form horizontally */
+        }
+        input, select {
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            display: block;
+            width: 100%; /* Make input fields take up 100% of form width */
+            box-sizing: border-box; /* Include padding and border in the width */
+        }
+        input[type="checkbox"] {
+            display: inline-block;
+            width: auto;
+            margin-top: 0;
+        }
+        label.checkbox-label {
+            display: inline-block;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #results {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            color: #333;
+        }
+        #additionalInputs {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            form {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Расчет дозировки препарата</h1>
+    <p>При учете, что кумулятивная доза 150 мг/кг (стандарт)</p>
+    <form id="dosageForm">
+        Ваш вес (кг): <input type="number" id="weight" required><br>
+        Суточная доза (мг): <input type="number" id="dailyDose" required><br>
+        Мг в одной таблетке: <input type="number" id="mgPerPill"><br>
+        Таблеток в упаковке: <input type="number" id="pillsPerPackage"><br>
+        Дата начала приема: <input type="date" id="startDate" required><br>
+        Стоимость упаковки (в вашей валюте): <input type="number" id="packageCost"><br>
+        <input type="checkbox" id="alreadyTaking" onclick="toggleAdditionalInputs()"> Я уже принимаю этот препарат<br>
+        <div id="additionalInputs">
+            <button type="button" onclick="calculateRemaining()">Посчитать оставшееся</button>
+        </div>
+        <button type="button" onclick="calculateDosage()">Рассчитать</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        function toggleAdditionalInputs() {
+            const display = document.getElementById('alreadyTaking').checked ? 'block' : 'none';
+            document.getElementById('additionalInputs').style.display = display;
+        }
+
+        function calculateRemaining() {
+            const cumulativeDose = 150; // куммулятивная доза в мг/кг
+            const weight = document.getElementById('weight').value;
+            const dailyDose = document.getElementById('dailyDose').value;
+            const startDate = document.getElementById('startDate').value;
+            const packageCost = document.getElementById('packageCost').value;
+            const mgPerPill = document.getElementById('mgPerPill').value;
+            const pillsPerPackage = document.getElementById('pillsPerPackage').value;
+
+            const totalMedicine = weight * cumulativeDose;
+            const startDateObject = new Date(startDate);
+            const today = new Date();
+            const daysTaken = Math.floor((today - startDateObject) / (1000 * 60 * 60 * 24));
+            const medicineTaken = daysTaken * dailyDose;
+            const remainingMedicine = totalMedicine - medicineTaken;
+            const remainingDays = Math.ceil(remainingMedicine / dailyDose);
+            const mgPerPackage = mgPerPill * pillsPerPackage;
+            const remainingPackages = Math.ceil(remainingMedicine / mgPerPackage);
+            const totalCost = remainingPackages * packageCost;
+
+            const resultsHtml = `Осталось принять: ${remainingMedicine} мг<br>
+                                Оставшиеся дни приема: ${remainingDays} дней<br>
+                                Необходимое количество упаковок: ${remainingPackages}<br>
+                                Общая стоимость: ${totalCost} вашей валюты<br>`;
+
+            document.getElementById('results').innerHTML = resultsHtml;
+        }
+
+        function calculateDosage() {
+            // Only display this function if the user is not already taking the medicine
+            if (!document.getElementById('alreadyTaking').checked) {
+                const cumulativeDose = 150;
+                const weight = document.getElementById('weight').value;
+                const dailyDose = document.getElementById('dailyDose').value;
+                const mgPerPill = document.getElementById('mgPerPill').value;
+                const pillsPerPackage = document.getElementById('pillsPerPackage').value;
+
+                const totalMedicine = weight * cumulativeDose;
+                const durationDays = Math.ceil(totalMedicine / dailyDose);
+                const mgPerPackage = mgPerPill * pillsPerPackage;
+                const numberOfPackages = Math.ceil(totalMedicine / mgPerPackage);
+                const totalCost = numberOfPackages * document.getElementById('packageCost').value;
+
+                const resultsHtml = `Необходимое количество медикамента: ${totalMedicine} мг<br>
+                                    Длительность приема: ${durationDays} дней<br>
+                                    Необходимое количество упаковок: ${numberOfPackages}<br>
+                                    Общая стоимость: ${totalCost} вашей валюты<br>`;
+
+                document.getElementById('results').innerHTML = resultsHtml;
+            }
+        }
+    </script>
+</body>
+</html>
